@@ -162,7 +162,7 @@ void convert(iconv_t converter, uint8_t xor_mask,
     char *output_bytes = dst;
     size_t output_bytes_left = dst_len;
     if (converter) {
-        iconv(converter, &input_bytes, &input_bytes_left, &output_bytes, &output_bytes_left);
+        iconv(converter, (const char **)&input_bytes, &input_bytes_left, &output_bytes, &output_bytes_left);
     } else {
         convert_scsu_to_utf8(&input_bytes, &input_bytes_left, &output_bytes, &output_bytes_left);
     }
@@ -377,7 +377,7 @@ fmp_file_t *fmp_open_buffer(const void *buffer, size_t len, fmp_error_t *errorCo
 
 fmp_file_t *fmp_open_file(const char *path, fmp_error_t *errorCode) {
     fmp_file_t *file = NULL;
-    FILE *stream = fopen(path, "r");
+    FILE *stream = fopen(path, "rb");
     if (!stream) {
         if (errorCode)
             *errorCode = FMP_ERROR_OPEN;

@@ -35,6 +35,7 @@ typedef struct fmp_sqlite_ctx_s {
     sqlite3_stmt *insert_stmt;
     char *table_name;
     int last_row;
+    fmp_column_array_t *columns;
 } fmp_sqlite_ctx_t;
 
 fmp_handler_status_t handle_value(int row, fmp_column_t *column, const char *value, void *ctxp) {
@@ -52,7 +53,17 @@ fmp_handler_status_t handle_value(int row, fmp_column_t *column, const char *val
         }
         sqlite3_clear_bindings(ctx->insert_stmt);
     }
-    int rc = sqlite3_bind_text(ctx->insert_stmt, column->index, value, strlen(value), SQLITE_TRANSIENT);
+    int bind_index = 0;
+    for (int i = 0; i < ctx->columns->count; i++) {
+        if (ctx->columns->columns[i].index == column->index) {
+            bind_index = i + 1;
+            break;
+        }
+    }
+    if (bind_index == 0)
+        return FMP_HANDLER_OK;
+
+    int rc = sqlite3_bind_text(ctx->insert_stmt, bind_index, value, strlen(value), SQLITE_TRANSIENT);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Error binding parameter: %s\n", sqlite3_errmsg(ctx->db));
         return FMP_HANDLER_ABORT;
@@ -170,7 +181,7 @@ int main(int argc, char *argv[]) {
         q += snprintf(q, insert_query_len - (q - insert_query), ") VALUES (");
         for (int j=0; j<columns->count; j++) {
             fmp_column_t *column = &columns->columns[j];
-            q += snprintf(q, insert_query_len - (q - insert_query), "?%d", column->index);
+            q += snprintf(q, insert_query_len - (q - insert_query), "?%d", j + 1);
             if (j < columns->count - 1)
                 q += snprintf(q, insert_query_len - (q - insert_query), ", ");
         }
@@ -192,7 +203,12 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        fmp_sqlite_ctx_t ctx = { .db = db, .table_name = table->utf8_name, .insert_stmt = stmt };
+        fmp_sqlite_ctx_t ctx = {
+            .db = db,
+            .table_name = table->utf8_name,
+            .insert_stmt = stmt,
+            .columns = columns
+        };
         fmp_read_values(file, table, &handle_value, &ctx);
         if (ctx.last_row) {
             int rc = sqlite3_step(stmt);

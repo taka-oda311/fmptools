@@ -32,3 +32,49 @@ API is subject to change.
 
 You might also enjoy [fp5dump](https://github.com/qwesda/fp5dump), although
 that project does not read the newer fp7 and fmp12 formats.
+
+
+Windows cross-compilation
+--
+
+The tools can be cross-compiled for 64-bit Windows from Linux using MinGW-w64.
+
+Required components include:
+
+* `x86_64-w64-mingw32-gcc`
+* Windows-targeted SQLite
+* Windows-targeted iconv
+
+Example configure command:
+
+```sh
+CPPFLAGS="-I/path/to/windows/include" \
+LDFLAGS="-L/path/to/windows/lib" \
+LIBS="-liconv" \
+./configure \
+  --host=x86_64-w64-mingw32 \
+  --disable-shared \
+  --enable-static
+```
+
+Then build with:
+
+```sh
+make
+```
+
+This produces Windows executables such as:
+
+```text
+fmp2sqlite.exe
+fmpdump.exe
+```
+
+If iconv is linked dynamically, place `iconv.dll` next to the executable when distributing it.
+
+This fork also includes fixes for:
+
+* opening FileMaker files in binary mode on Windows
+* MinGW/iconv compatibility
+* nested FMP12 column metadata
+* SQLite parameter binding for sparse FileMaker column indexes
