@@ -200,6 +200,9 @@ jobs:
           echo "=== fmp2excel dependencies ==="
           x86_64-w64-mingw32-objdump -p fmp2excel.exe | grep "DLL Name"
 
+          echo "=== DLL files ==="
+          find "$GITHUB_WORKSPACE/win64" -iname "*.dll" -type f
+          
       - name: Package
         run: |
           mkdir -p dist/fmptools-windows-x64
