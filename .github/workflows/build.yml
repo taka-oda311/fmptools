@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ clang, gcc, gcc-9, gcc-10, gcc-11 ]
+        compiler: [clang, gcc, gcc-9, gcc-10, gcc-11]
     steps:
       - name: Add repository
         run: sudo apt-add-repository -y "ppa:ubuntu-toolchain-r/test"
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ clang, gcc ]
+        compiler: [clang, gcc]
     steps:
       - name: Install packages
         run: brew install automake libtool yajl libxlsxwriter
@@ -57,3 +57,59 @@ jobs:
         run: ./fmp2sqlite test/data/fp3/government.FP3 government.sqlite
       - name: Excel test
         run: ./fmp2excel test/data/fp3/government.FP3 government.xlsx
+  windows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            gettext \
+            mingw-w64 \
+            win-iconv-mingw-w64-dev \
+            wget \
+            unzip \
+            zip
+
+      - name: Build Windows SQLite
+        run: |
+          wget https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz
+          tar xzf sqlite-autoconf-3530400.tar.gz
+          cd sqlite-autoconf-3530400
+
+          ./configure \
+            --host=x86_64-w64-mingw32 \
+            --prefix="$GITHUB_WORKSPACE/win64" \
+            --disable-shared \
+            --enable-static
+
+          make -j2
+          make install
+
+      - name: Configure fmptools
+        run: |
+          autoreconf -i -f
+
+          CPPFLAGS="-I$GITHUB_WORKSPACE/win64/include -I/usr/x86_64-w64-mingw32/include" \
+          LDFLAGS="-L$GITHUB_WORKSPACE/win64/lib -L/usr/x86_64-w64-mingw32/lib" \
+          LIBS="-liconv" \
+          ./configure \
+            --host=x86_64-w64-mingw32 \
+            --disable-shared \
+            --enable-static
+
+      - name: Build fmptools
+        run: make -j2
+
+      - name: Verify Windows binaries
+        run: |
+          file fmp2sqlite.exe
+          file fmpdump.exe
+          x86_64-w64-mingw32-objdump -p fmp2sqlite.exe | grep "DLL Name"
