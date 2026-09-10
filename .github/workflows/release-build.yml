@@ -22,7 +22,9 @@ jobs:
             automake \
             libtool \
             gettext \
-            libsqlite3-dev
+            libsqlite3-dev \
+            libyajl-dev \
+            libxlsxwriter-dev
 
       - name: Configure
         run: |
@@ -56,7 +58,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install automake libtool gettext sqlite
+          brew install automake libtool gettext sqlite yajl libxlsxwriter
 
       - name: Configure
         run: |
