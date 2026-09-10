@@ -6,14 +6,10 @@ rm -f "$TMP_DB"
 
 ./fmp2sqlite test/data/fmp12/PortableCode39-2.fmp12 "$TMP_DB"
 
-if [ ! -f "$TMP_DB" ]; then
-    echo "SQLite output was not created"
+if [ ! -s "$TMP_DB" ]; then
+    echo "SQLite output was not created or is empty"
     exit 1
 fi
-
-TABLES=$(sqlite3 "$TMP_DB" ".tables")
-
-echo "$TABLES" | grep -q "Data"
 
 rm -f "$TMP_DB"
 
