@@ -133,8 +133,11 @@ static chunk_status_t handle_chunk_read_values_v3(fmp_chunk_t *chunk, fmp_read_v
         if (column_index == 0 || column_index > FMP_MAX_INDEX)
             return CHUNK_NEXT;
         if (column_index > ctx->num_columns) {
+            size_t old_num_columns = ctx->num_columns;
             ctx->num_columns = column_index;
             ctx->columns = realloc(ctx->columns, ctx->num_columns * sizeof(fmp_column_t));
+            memset(&ctx->columns[old_num_columns], 0,
+                   (ctx->num_columns - old_num_columns) * sizeof(fmp_column_t));
         }
         fmp_column_t *current_column = ctx->columns + column_index - 1;
         if (chunk->ref_simple == 1) {
@@ -162,14 +165,58 @@ static chunk_status_t handle_chunk_read_values_v7(fmp_chunk_t *chunk, fmp_read_v
     if (chunk->type != FMP_CHUNK_FIELD_REF_SIMPLE && chunk->type != FMP_CHUNK_DATA_SEGMENT)
         return CHUNK_NEXT;
 
+    if (chunk->path_level == 5 &&
+            path_value(chunk, path_at(chunk, 0)) == ctx->target_table_index + 128 &&
+            path_is(chunk, path_at(chunk, 1), 3) &&
+            path_is(chunk, path_at(chunk, 2), 5) &&
+            path_is(chunk, path_at(chunk, 4), 16) &&
+            chunk->ref_simple == 1) {
+        size_t column_index = path_value(chunk, path_at(chunk, 3));
+
+        if (column_index > 0 && column_index <= FMP_MAX_INDEX) {
+            if (column_index > ctx->num_columns) {
+                size_t old_num_columns = ctx->num_columns;
+                ctx->num_columns = column_index;
+                ctx->columns = realloc(
+                    ctx->columns,
+                    ctx->num_columns * sizeof(fmp_column_t)
+                );
+                memset(
+                    &ctx->columns[old_num_columns],
+                    0,
+                    (ctx->num_columns - old_num_columns) * sizeof(fmp_column_t)
+                );
+            }
+
+            fmp_column_t *current_column =
+                ctx->columns + column_index - 1;
+
+            convert(
+                ctx->file->converter,
+                ctx->file->xor_mask,
+                current_column->utf8_name,
+                sizeof(current_column->utf8_name),
+                chunk->data.bytes,
+                chunk->data.len
+            );
+
+            current_column->index = column_index;
+        }
+
+        return CHUNK_NEXT;
+    }
+
     if (table_path_match_start2(chunk, 3, 3, 5)) {
         fmp_data_t *column_path = path_at(chunk, chunk->path_level-1);
         size_t column_index = path_value(chunk, column_path);
         if (column_index == 0 || column_index > FMP_MAX_INDEX)
             return CHUNK_NEXT;
         if (column_index > ctx->num_columns) {
+            size_t old_num_columns = ctx->num_columns;
             ctx->num_columns = column_index;
             ctx->columns = realloc(ctx->columns, ctx->num_columns * sizeof(fmp_column_t));
+            memset(&ctx->columns[old_num_columns], 0,
+                   (ctx->num_columns - old_num_columns) * sizeof(fmp_column_t));
         }
         fmp_column_t *current_column = ctx->columns + column_index - 1;
         if (chunk->ref_simple == 16) {
