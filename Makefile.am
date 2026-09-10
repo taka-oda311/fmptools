@@ -57,3 +57,6 @@ fuzz_fmp_LDADD = libfmptools.la @LIB_FUZZING_ENGINE@
 AM_CFLAGS += -fsanitize=fuzzer-no-link -fsanitize=address -g
 libfmptools_la_LDFLAGS += -fsanitize=fuzzer -fsanitize=address
 endif
+
+TESTS = test/test_fmp2sqlite.sh
+EXTRA_DIST = $(TESTS)
