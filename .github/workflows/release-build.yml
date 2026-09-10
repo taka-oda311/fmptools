@@ -151,6 +151,13 @@ jobs:
       - name: Build
         run: make -j2
 
+      - name: Verify Windows tools
+        run: |
+          ls -l *.exe
+          file fmp2sqlite.exe
+          file fmpdump.exe
+          file fmp2json.exe
+          
       - name: Package
         run: |
           mkdir -p dist/fmptools-windows-x64
