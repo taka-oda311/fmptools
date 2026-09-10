@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/evanmiller/fmptools/workflows/build/badge.svg)](https://github.com/evanmiller/fmptools/actions)
+[![Build Status](https://github.com/taka-oda311/fmptools/actions/workflows/build.yml/badge.svg)](https://github.com/taka-oda311/fmptools/actions/workflows/build.yml)
 
 FMP Tools
 --
