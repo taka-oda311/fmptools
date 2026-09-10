@@ -186,6 +186,7 @@ jobs:
           file fmp2sqlite.exe
           file fmpdump.exe
           file fmp2json.exe
+          file fmp2excel.exe
 
       - name: Package
         run: |
