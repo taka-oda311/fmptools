@@ -202,7 +202,7 @@ jobs:
 
           echo "=== DLL files ==="
           find "$GITHUB_WORKSPACE/win64" -iname "*.dll" -type f
-          
+
       - name: Package
         run: |
           mkdir -p dist/fmptools-windows-x64
@@ -211,7 +211,10 @@ jobs:
           cp fmpdump.exe dist/fmptools-windows-x64/
           cp fmp2json.exe dist/fmptools-windows-x64/
           cp fmp2excel.exe dist/fmptools-windows-x64/
+
           cp /usr/x86_64-w64-mingw32/bin/iconv.dll dist/fmptools-windows-x64/
+          cp "$GITHUB_WORKSPACE/win64/lib/libyajl.dll" dist/fmptools-windows-x64/
+          cp "$GITHUB_WORKSPACE/win64/bin/libz.dll" dist/fmptools-windows-x64/
 
           cd dist
           zip -r fmptools-windows-x64.zip fmptools-windows-x64
