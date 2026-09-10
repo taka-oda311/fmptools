@@ -194,6 +194,12 @@ jobs:
           file fmp2json.exe
           file fmp2excel.exe
 
+          echo "=== fmp2json dependencies ==="
+          x86_64-w64-mingw32-objdump -p fmp2json.exe | grep "DLL Name"
+
+          echo "=== fmp2excel dependencies ==="
+          x86_64-w64-mingw32-objdump -p fmp2excel.exe | grep "DLL Name"
+
       - name: Package
         run: |
           mkdir -p dist/fmptools-windows-x64
