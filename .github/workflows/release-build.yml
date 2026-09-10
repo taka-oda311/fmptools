@@ -150,3 +150,40 @@ jobs:
         with:
           name: fmptools-windows-x64
           path: dist/fmptools-windows-x64.zip
+
+
+  publish:
+    name: Publish GitHub Release
+    needs:
+      - linux
+      - macos
+      - windows
+
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+
+          cp dist/fmptools-linux-x64/fmptools-linux-x64.tar.gz release/
+          cp dist/fmptools-macos-arm64/fmptools-macos-arm64.tar.gz release/
+          cp dist/fmptools-windows-x64/fmptools-windows-x64.zip release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/fmptools-linux-x64.tar.gz
+            release/fmptools-macos-arm64.tar.gz
+            release/fmptools-windows-x64.zip
+          generate_release_notes: true
