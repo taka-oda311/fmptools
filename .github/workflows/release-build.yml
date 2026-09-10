@@ -101,7 +101,8 @@ jobs:
             win-iconv-mingw-w64-dev \
             wget \
             unzip \
-            zip
+            zip \
+            cmake
 
       - name: Build Windows SQLite
         run: |
@@ -118,6 +119,20 @@ jobs:
 
           make -j2
           make install
+
+      - name: Build Windows YAJL
+        run: |
+          git clone https://github.com/lloyd/yajl.git
+          cd yajl
+
+          cmake -S . -B build \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/win64" \
+            -DBUILD_SHARED_LIBS=OFF
+
+          cmake --build build -j2
+          cmake --install build
 
       - name: Configure
         run: |
