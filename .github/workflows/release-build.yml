@@ -171,7 +171,7 @@ jobs:
 
           CPPFLAGS="-I$GITHUB_WORKSPACE/win64/include -I/usr/x86_64-w64-mingw32/include" \
           LDFLAGS="-L$GITHUB_WORKSPACE/win64/lib -L/usr/x86_64-w64-mingw32/lib" \
-          LIBS="-liconv" \
+          LIBS="-liconv -lz" \
           ./configure \
             --host=x86_64-w64-mingw32 \
             --disable-shared \
