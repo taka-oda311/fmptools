@@ -41,6 +41,8 @@ jobs:
         run: ./configure
         env:
           CC: ${{ matrix.compiler }}
+          CPPFLAGS: -I/opt/homebrew/include
+          LDFLAGS: -L/opt/homebrew/lib
       - name: Make
         run: make
       - name: JSON test
