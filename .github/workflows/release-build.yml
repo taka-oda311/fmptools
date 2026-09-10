@@ -37,6 +37,8 @@ jobs:
           mkdir -p dist/fmptools-linux-x64
           cp fmp2sqlite dist/fmptools-linux-x64/
           cp fmpdump dist/fmptools-linux-x64/
+          cp fmp2json dist/fmptools-linux-x64/
+          cp fmp2excel dist/fmptools-linux-x64/
           tar -C dist -czf dist/fmptools-linux-x64.tar.gz fmptools-linux-x64
 
       - name: Upload artifact
@@ -72,6 +74,8 @@ jobs:
           mkdir -p dist/fmptools-macos-arm64
           cp fmp2sqlite dist/fmptools-macos-arm64/
           cp fmpdump dist/fmptools-macos-arm64/
+          cp fmp2json dist/fmptools-macos-arm64/
+          cp fmp2excel dist/fmptools-macos-arm64/
           tar -C dist -czf dist/fmptools-macos-arm64.tar.gz fmptools-macos-arm64
 
       - name: Upload artifact
@@ -195,6 +199,7 @@ jobs:
           cp fmp2sqlite.exe dist/fmptools-windows-x64/
           cp fmpdump.exe dist/fmptools-windows-x64/
           cp fmp2json.exe dist/fmptools-windows-x64/
+          cp fmp2excel.exe dist/fmptools-windows-x64/
           cp /usr/x86_64-w64-mingw32/bin/iconv.dll dist/fmptools-windows-x64/
 
           cd dist
