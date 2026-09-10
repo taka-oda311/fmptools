@@ -1,0 +1,149 @@
+name: Release build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            gettext \
+            libsqlite3-dev
+
+      - name: Configure
+        run: |
+          autoreconf -i -f
+          ./configure
+
+      - name: Build
+        run: make -j2
+
+      - name: Package
+        run: |
+          mkdir -p dist/fmptools-linux-x64
+          cp fmp2sqlite dist/fmptools-linux-x64/
+          cp fmpdump dist/fmptools-linux-x64/
+          tar -C dist -czf dist/fmptools-linux-x64.tar.gz fmptools-linux-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fmptools-linux-x64
+          path: dist/fmptools-linux-x64.tar.gz
+
+
+  macos:
+    name: macOS ARM64
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install automake libtool gettext sqlite
+
+      - name: Configure
+        run: |
+          autoreconf -i -f -I "$(brew --prefix gettext)/share/gettext/m4"
+          ./configure
+        env:
+          CPPFLAGS: -I/opt/homebrew/include
+          LDFLAGS: -L/opt/homebrew/lib
+
+      - name: Build
+        run: make -j2
+
+      - name: Package
+        run: |
+          mkdir -p dist/fmptools-macos-arm64
+          cp fmp2sqlite dist/fmptools-macos-arm64/
+          cp fmpdump dist/fmptools-macos-arm64/
+          tar -C dist -czf dist/fmptools-macos-arm64.tar.gz fmptools-macos-arm64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fmptools-macos-arm64
+          path: dist/fmptools-macos-arm64.tar.gz
+
+
+  windows:
+    name: Windows x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            gettext \
+            mingw-w64 \
+            win-iconv-mingw-w64-dev \
+            wget \
+            unzip \
+            zip
+
+      - name: Build Windows SQLite
+        run: |
+          wget https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz
+          tar xf sqlite-autoconf-3530400.tar.gz
+
+          cd sqlite-autoconf-3530400
+
+          ./configure \
+            --host=x86_64-w64-mingw32 \
+            --prefix="$GITHUB_WORKSPACE/win64" \
+            --disable-shared \
+            --enable-static
+
+          make -j2
+          make install
+
+      - name: Configure
+        run: |
+          autoreconf -i -f
+
+          CPPFLAGS="-I$GITHUB_WORKSPACE/win64/include -I/usr/x86_64-w64-mingw32/include" \
+          LDFLAGS="-L$GITHUB_WORKSPACE/win64/lib -L/usr/x86_64-w64-mingw32/lib" \
+          LIBS="-liconv" \
+          ./configure \
+            --host=x86_64-w64-mingw32 \
+            --disable-shared \
+            --enable-static
+
+      - name: Build
+        run: make -j2
+
+      - name: Package
+        run: |
+          mkdir -p dist/fmptools-windows-x64
+
+          cp fmp2sqlite.exe dist/fmptools-windows-x64/
+          cp fmpdump.exe dist/fmptools-windows-x64/
+          cp /usr/x86_64-w64-mingw32/bin/iconv.dll dist/fmptools-windows-x64/
+
+          cd dist
+          zip -r fmptools-windows-x64.zip fmptools-windows-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fmptools-windows-x64
+          path: dist/fmptools-windows-x64.zip
