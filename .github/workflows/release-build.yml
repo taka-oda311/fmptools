@@ -2,6 +2,9 @@ name: Release build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - release-build
 
 jobs:
   linux:
