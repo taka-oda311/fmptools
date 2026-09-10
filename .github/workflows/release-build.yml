@@ -45,7 +45,6 @@ jobs:
           name: fmptools-linux-x64
           path: dist/fmptools-linux-x64.tar.gz
 
-
   macos:
     name: macOS ARM64
     runs-on: macos-latest
@@ -80,7 +79,6 @@ jobs:
         with:
           name: fmptools-macos-arm64
           path: dist/fmptools-macos-arm64.tar.gz
-
 
   windows:
     name: Windows x64
@@ -125,6 +123,10 @@ jobs:
           git clone https://github.com/lloyd/yajl.git
           cd yajl
 
+          sed -i 's/IF (WIN32)/IF (WIN32 AND MSVC)/' CMakeLists.txt
+          sed -i 's/ELSE (WIN32)/ELSE (WIN32 AND MSVC)/' CMakeLists.txt
+          sed -i 's/ENDIF (WIN32)/ENDIF (WIN32 AND MSVC)/' CMakeLists.txt
+
           cmake -S . -B build \
             -DCMAKE_SYSTEM_NAME=Windows \
             -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -165,7 +167,6 @@ jobs:
         with:
           name: fmptools-windows-x64
           path: dist/fmptools-windows-x64.zip
-
 
   publish:
     name: Publish GitHub Release
