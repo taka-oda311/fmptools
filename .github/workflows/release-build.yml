@@ -136,6 +136,20 @@ jobs:
           cmake --build build -j2
           cmake --install build
 
+      - name: Build Windows zlib
+        run: |
+          git clone https://github.com/madler/zlib.git
+          cd zlib
+
+          cmake -S . -B build \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/win64" \
+            -DBUILD_SHARED_LIBS=OFF
+
+          cmake --build build -j2
+          cmake --install build
+
       - name: Build Windows libxlsxwriter
         run: |
           git clone https://github.com/jmcnamara/libxlsxwriter.git
