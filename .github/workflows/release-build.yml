@@ -22,7 +22,9 @@ jobs:
             automake \
             libtool \
             gettext \
-            libsqlite3-dev
+            libsqlite3-dev \
+            libyajl-dev \
+            libxlsxwriter-dev
 
       - name: Configure
         run: |
@@ -37,6 +39,8 @@ jobs:
           mkdir -p dist/fmptools-linux-x64
           cp fmp2sqlite dist/fmptools-linux-x64/
           cp fmpdump dist/fmptools-linux-x64/
+          cp fmp2json dist/fmptools-linux-x64/
+          cp fmp2excel dist/fmptools-linux-x64/
           tar -C dist -czf dist/fmptools-linux-x64.tar.gz fmptools-linux-x64
 
       - name: Upload artifact
@@ -44,7 +48,6 @@ jobs:
         with:
           name: fmptools-linux-x64
           path: dist/fmptools-linux-x64.tar.gz
-
 
   macos:
     name: macOS ARM64
@@ -55,7 +58,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install automake libtool gettext sqlite
+          brew install automake libtool gettext sqlite yajl libxlsxwriter
 
       - name: Configure
         run: |
@@ -73,6 +76,8 @@ jobs:
           mkdir -p dist/fmptools-macos-arm64
           cp fmp2sqlite dist/fmptools-macos-arm64/
           cp fmpdump dist/fmptools-macos-arm64/
+          cp fmp2json dist/fmptools-macos-arm64/
+          cp fmp2excel dist/fmptools-macos-arm64/
           tar -C dist -czf dist/fmptools-macos-arm64.tar.gz fmptools-macos-arm64
 
       - name: Upload artifact
@@ -80,7 +85,6 @@ jobs:
         with:
           name: fmptools-macos-arm64
           path: dist/fmptools-macos-arm64.tar.gz
-
 
   windows:
     name: Windows x64
@@ -101,7 +105,8 @@ jobs:
             win-iconv-mingw-w64-dev \
             wget \
             unzip \
-            zip
+            zip \
+            cmake
 
       - name: Build Windows SQLite
         run: |
@@ -119,13 +124,60 @@ jobs:
           make -j2
           make install
 
+      - name: Build Windows YAJL
+        run: |
+          git clone https://github.com/lloyd/yajl.git
+          cd yajl
+
+          sed -i 's/IF (WIN32)/IF (WIN32 AND MSVC)/' CMakeLists.txt
+          sed -i 's/ELSE (WIN32)/ELSE (WIN32 AND MSVC)/' CMakeLists.txt
+          sed -i 's/ENDIF (WIN32)/ENDIF (WIN32 AND MSVC)/' CMakeLists.txt
+
+          cmake -S . -B build \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/win64" \
+            -DBUILD_SHARED_LIBS=OFF
+
+          cmake --build build -j2
+          cmake --install build
+
+      - name: Build Windows zlib
+        run: |
+          git clone https://github.com/madler/zlib.git
+          cd zlib
+
+          cmake -S . -B build \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/win64" \
+            -DBUILD_SHARED_LIBS=OFF
+
+          cmake --build build -j2
+          cmake --install build
+
+      - name: Build Windows libxlsxwriter
+        run: |
+          git clone https://github.com/jmcnamara/libxlsxwriter.git
+          cd libxlsxwriter
+
+          cmake -S . -B build \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+            -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/win64" \
+            -DBUILD_SHARED_LIBS=OFF
+
+          cmake --build build -j2
+          cmake --install build
+
       - name: Configure
         run: |
           autoreconf -i -f
 
           CPPFLAGS="-I$GITHUB_WORKSPACE/win64/include -I/usr/x86_64-w64-mingw32/include" \
           LDFLAGS="-L$GITHUB_WORKSPACE/win64/lib -L/usr/x86_64-w64-mingw32/lib" \
-          LIBS="-liconv" \
+          LIBS="-liconv -lz" \
           ./configure \
             --host=x86_64-w64-mingw32 \
             --disable-shared \
@@ -134,13 +186,35 @@ jobs:
       - name: Build
         run: make -j2
 
+      - name: Verify Windows tools
+        run: |
+          ls -l *.exe
+          file fmp2sqlite.exe
+          file fmpdump.exe
+          file fmp2json.exe
+          file fmp2excel.exe
+
+          echo "=== fmp2json dependencies ==="
+          x86_64-w64-mingw32-objdump -p fmp2json.exe | grep "DLL Name"
+
+          echo "=== fmp2excel dependencies ==="
+          x86_64-w64-mingw32-objdump -p fmp2excel.exe | grep "DLL Name"
+
+          echo "=== DLL files ==="
+          find "$GITHUB_WORKSPACE/win64" -iname "*.dll" -type f
+
       - name: Package
         run: |
           mkdir -p dist/fmptools-windows-x64
 
           cp fmp2sqlite.exe dist/fmptools-windows-x64/
           cp fmpdump.exe dist/fmptools-windows-x64/
+          cp fmp2json.exe dist/fmptools-windows-x64/
+          cp fmp2excel.exe dist/fmptools-windows-x64/
+
           cp /usr/x86_64-w64-mingw32/bin/iconv.dll dist/fmptools-windows-x64/
+          cp "$GITHUB_WORKSPACE/win64/lib/libyajl.dll" dist/fmptools-windows-x64/
+          cp "$GITHUB_WORKSPACE/win64/bin/libz.dll" dist/fmptools-windows-x64/
 
           cd dist
           zip -r fmptools-windows-x64.zip fmptools-windows-x64
@@ -150,7 +224,6 @@ jobs:
         with:
           name: fmptools-windows-x64
           path: dist/fmptools-windows-x64.zip
-
 
   publish:
     name: Publish GitHub Release
